@@ -8,9 +8,14 @@ import * as random from "maath/random/dist/maath-random.esm";
 
 const StarBackground = (props) => {
   const ref = useRef();
-  const [sphere] = useState(() =>
-    random.inSphere(new Float32Array(5000), { radius: 1.2 })
-  );
+  const [sphere] = useState(() => {
+    const data = new Float32Array(5001);
+    random.inSphere(data, { radius: 1.2 });
+    for (let i = 0; i < data.length; i++) {
+      if (isNaN(data[i])) data[i] = 0;
+    }
+    return data;
+  });
 
   useFrame((state, delta) => {
     ref.current.rotation.x -= delta/10;
@@ -29,10 +34,10 @@ const StarBackground = (props) => {
         >
             <PointMaterial
                 transparent
-                color="$fff"
+                color="#fff"
                 size={0.002}
                 sizeAttenuation = {true}
-                dethWrite={false}
+                depthWrite={false}
             />
         </Points>
     </group>

@@ -8,6 +8,7 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
+  secret: process.env.AUTH_SECRET || "nebula_nexus_development_secret_session_key",
   
   callbacks: {
     async signIn({ user, account }) {
@@ -23,12 +24,12 @@ export const {
       return session;
     },
     async jwt({ token }) {
-      // Fetch user data from the database based on the token's subject (user ID)
+      // User lookup
       if (!token.sub) return token;
       const user = await db.user.findUnique({ where: { id: token.sub } });
       if (!user) return token;
 
-      // Assign necessary fields to the token
+      // Token claims
       token.name = user.name;
       token.email = user.email;
       token.phone = user.phone;

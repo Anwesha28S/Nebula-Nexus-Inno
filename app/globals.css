@@ -381,3 +381,36 @@ html {
 .animate-spin-slow {
   animation: spin-slow 8s linear infinite;
 }
+
+.registration-stars {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: .78;
+}
+
+.registration-stars canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Floating astronaut animation */
+@keyframes astronautFloat {
+  0%   { transform: rotate(0deg)    scale(1);     }
+  20%  { transform: rotate(-3.5deg) scale(0.984); }
+  45%  { transform: rotate(2.4deg)  scale(1.014); }
+  70%  { transform: rotate(-1.8deg) scale(0.993); }
+  100% { transform: rotate(0deg)    scale(1);     }
+}
+
+.animate-astronaut-float {
+  /* Tether pivot */
+  transform-origin: 98% 24%;
+  animation: astronautFloat 7s ease-in-out infinite;
+  will-change: transform;
+}

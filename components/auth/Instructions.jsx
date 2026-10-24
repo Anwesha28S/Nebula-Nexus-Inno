@@ -24,9 +24,9 @@ export const Instructions = () => (
 
       <p><strong>Game Rules:</strong></p>
       <p>1. You have a total of <strong>10 minutes</strong> to complete the maze.</p>
-      <p>2. You start with <strong>3 oxygen tanks</strong>. Each wrong answer reduces one oxygen cylinder. Game over if all oxygen tanks are lost before reaching the destination.</p>
+      <p>2. Your spacecraft starts with <strong>100% Vitality</strong>. Each wrong answer depletes one-third of your spacecraft vitality. Game over if all vitality is lost before reaching the destination.</p>
 
-      <p><strong>Goal:</strong> Complete the maze in the shortest time, maximize your star count, and make it to the end without running out of oxygen tanks!</p>
+      <p><strong>Goal:</strong> Complete the maze in the shortest time, maximize your star count, and make it to the end without completely depleting your spacecraft vitality!</p>
     </div>
   </section>
 );

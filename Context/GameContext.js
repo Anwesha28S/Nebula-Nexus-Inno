@@ -1,41 +1,69 @@
-// GameContext.js
 'use client'
 import { createContext, useState, useEffect } from 'react';
 import { signOut } from 'next-auth/react';
 import axios from 'axios';
 export const GameContext = createContext();
 import { questions } from '@/data/questions';
-import { set } from 'zod';
+
+// Preloaded audio singletons
+let correctAudio = null;
+let wrongAudio = null;
+let beepAudio = null;
+
+if (typeof window !== "undefined") {
+  try {
+    correctAudio = new Audio('/sounds/correct.mp3');
+    correctAudio.preload = 'auto';
+    correctAudio.load();
+
+    wrongAudio = new Audio('/sounds/wrong.mp3');
+    wrongAudio.preload = 'auto';
+    wrongAudio.load();
+
+    beepAudio = new Audio('/sounds/beep.mp3');
+    beepAudio.preload = 'auto';
+    beepAudio.load();
+  } catch (e) {
+    console.error("Audio init error:", e);
+  }
+}
+
+const playSound = (audio) => {
+  if (!audio) return;
+  try {
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  } catch (e) {}
+};
 
 export const GameProvider = ({ children }) => {
   let mazeMatrix = [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] , // Row 1 (all walls)
-    [1, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], // Row 2
-    [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 3, 1, 0, 1, 4, 1], // Row 3
-    [1, 0, 1, 0, 2, 0, 0, 0, 1, 0, 1, 2, 0, 0, 0, 0, 1, 0, 1, 0, 0, 4, 0, 0, 1, 0, 2, 0, 1, 0, 1, 0, 1, 0, 1], // Row 4
-    [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 3, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1], // Row 5
-    [0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1], // Row 6
-    [0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 3, 1, 0, 1], // Row 7
-    [1, 0, 1, 0, 1, 3, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1], // Row 8
-    [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1], // Row 9
-    [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1], // Row 10
-    [1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1], // Row 11
-    [1, 4, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 1, 0, 0, 0, 1], // Row 12
-    [1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1], // Row 13
-    [1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 3, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 4, 1], // Row 14
-    [1, 0, 1, 0, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1], // Row 15
-    [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1], // Row 16
-    [1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1], // Row 17
-    [1, 0, 1, 0, 1, 0, 1, 0, 2, 0, 1, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 3, 0, 0, 0, 0, 0, 2, 1, 0, 5], // Row 18
-    [1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0], // Row 19
-    [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1], // Row 20
-    [1, 0, 1, 0, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1], // Row 21
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1], // Row 22
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]  // Row 23
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 3, 1, 0, 1, 4, 1],
+    [1, 0, 1, 0, 2, 0, 0, 0, 1, 0, 1, 2, 0, 0, 0, 0, 1, 0, 1, 0, 0, 4, 0, 0, 1, 0, 2, 0, 1, 0, 1, 0, 1, 0, 1],
+    [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 3, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
+    [0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1],
+    [0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 3, 1, 0, 1],
+    [1, 0, 1, 0, 1, 3, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1],
+    [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1],
+    [1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1],
+    [1, 4, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 1, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1],
+    [1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 3, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 4, 1],
+    [1, 0, 1, 0, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+    [1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1],
+    [1, 0, 1, 0, 1, 0, 1, 0, 2, 0, 1, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 3, 0, 0, 0, 0, 0, 2, 1, 0, 5],
+    [1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0],
+    [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1],
+    [1, 0, 1, 0, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
   ];
-    const [mazeLayout, setMazeLayout] = useState(mazeMatrix);
+  const [mazeLayout, setMazeLayout] = useState(mazeMatrix);
     
-  //console.log(mazeLayout);
   const numRows = mazeLayout.length;          
   const numCols = mazeLayout[0].length; 
   const [ratPosition, setRatPosition] = useState({ row: 5, col: 0 });
@@ -52,10 +80,6 @@ export const GameProvider = ({ children }) => {
   const [gameStarted, setGameStarted] = useState(null);
   const [diff,setdiff]=useState(0);
   const [showBackButton, setShowBackButton] = useState(false);
-  
-  const correctSound = typeof window !== "undefined" ? new Audio('/sounds/correct.mp3') : null;
-  const wrongSound = typeof window !== "undefined" ? new Audio('/sounds/wrong.mp3') : null;
-  const beepAudio = typeof window !== 'undefined' ? new Audio('/sounds/beep.mp3') : null;
 
 
   const endGame = async (timeTaken) => {
@@ -102,57 +126,69 @@ export const GameProvider = ({ children }) => {
 
    const getQuestion = (difficulty) => {
     setdiff(difficulty);
-    let questionSet;
+    let questionSet = [];
     if (difficulty === 2) {
-      questionSet = questions.easy;
+      questionSet = questions.easy || [];
+    } else if (difficulty === 3) {
+      questionSet = questions.medium || questions.easy || [];
+    } else if (difficulty === 4) {
+      questionSet = questions.hard || questions.easy || [];
+    } else {
+      questionSet = questions.easy || [];
     }
-    else if (difficulty === 3) {
-      questionSet = questions.medium;
-    }
-    else if (difficulty === 4) {
-      questionSet = questions.hard;
-    }
-    
 
-    const unansweredQuestions = questionSet.filter(q => !answeredQuestions.has(q.id));
+    if (!questionSet || questionSet.length === 0) return;
+
+    let unansweredQuestions = questionSet.filter(
+      (q) => q && !answeredQuestions.has(q.id)
+    );
+    if (unansweredQuestions.length === 0) {
+      unansweredQuestions = questionSet;
+    }
 
     if (unansweredQuestions.length > 0) {
-      const randomQuestion = unansweredQuestions[Math.floor(Math.random() * unansweredQuestions.length)];
-      setCurrentQuestion(randomQuestion);
+      const randomQuestion =
+        unansweredQuestions[
+          Math.floor(Math.random() * unansweredQuestions.length)
+        ];
+      setCurrentQuestion({ ...randomQuestion, difficulty });
       setIsQuestionModalOpen(true);
     }
   };
   const handleAnswerSubmission = (selectedAnswer) => {
-    if (selectedAnswer === currentQuestion.correctAnswer) {
-      setScore(score + (diff-1)*10); 
-      if ( diff == 2) {
+    if (selectedAnswer === currentQuestion?.correctAnswer) {
+      setScore(score + (diff - 1) * 10);
+      if (diff == 2) {
         setEasycnt(easycnt + 1);
       }
-      if ( diff == 3) {
+      if (diff == 3) {
         setMediumcnt(mediumcnt + 1);
       }
-      if( diff == 4) {
+      if (diff == 4) {
         setHardcnt(hardcnt + 1);
       }
-      if( diff == 5) {
+      if (diff == 5) {
         setHardcnt(hardcnt + 3);
       }
-      if (correctSound) correctSound.play();
+      playSound(correctAudio);
     } else {
-      setLifelines(lifelines - 1); 
-      if (wrongSound) wrongSound.play();
+      setLifelines(lifelines - 1);
+      playSound(wrongAudio);
     }
-    setAnsweredQuestions(new Set([...answeredQuestions, currentQuestion.id])); 
+    if (currentQuestion?.id) {
+      setAnsweredQuestions(new Set([...answeredQuestions, currentQuestion.id]));
+    }
     const updatedMaze = [...mazeLayout];
-    updatedMaze[ratPosition.row][ratPosition.col] = 0; 
-    setMazeLayout(updatedMaze); 
-    // setIsQuestionModalOpen(false);
-    // setCurrentQuestion(null); 
+    updatedMaze[ratPosition.row][ratPosition.col] = 0;
+    setMazeLayout(updatedMaze);
+    
+    // Modal dismissal
     setTimeout(() => {
       setIsQuestionModalOpen(false);
       setCurrentQuestion(null);
-    }, 2000);
+    }, 700);
   };
+
   // Timer logic
   useEffect(() => {
     if (isGameOver) return;
@@ -164,45 +200,32 @@ export const GameProvider = ({ children }) => {
       setIsGameOver(true);
     }
 
-    if (timeLeft === 4 && beepAudio) {
-      beepAudio.play();
+    if (timeLeft === 4) {
+      playSound(beepAudio);
     }
 
     return () => clearInterval(timer);
   }, [timeLeft, lifelines ,isGameOver]);
 
   
-  // const handleMove = (newRow, newCol) => { 
-  //   if (!isGameOver) {
-  //     // Check if the new cell is the destination (value 5)
-  //     if (mazeLayout[newRow][newCol] === 5) {
-  //       setScore((prevScore) => prevScore + 60);  // Add 60 points
-  //       setIsGameOver(true); // Mark the game as over
-  //       return;
-  //     }
-  
-  //     setRatPosition({ row: newRow, col: newCol });
-  //   }
-  // };
-  
-  const handleMove = (newRow, newCol) => { 
-    // Prevent movement if a question modal is open or the game is over
+  const handleMove = (newRow, newCol) => {
+    // Movement guards
     if (isQuestionModalOpen || isGameOver) return;
-  
-    // Check if the new cell is the destination (value 5)
+
+    // Destination check (cell 5)
     if (mazeLayout[newRow][newCol] === 5) {
-      setScore((prevScore) => prevScore + 90);  
-      setIsGameOver(true); 
+      setScore((prevScore) => prevScore + 90);
+      setIsGameOver(true);
       return;
     }
-      if ([2, 3, 4].includes(mazeLayout[newRow][newCol])) {
-      getQuestion(mazeLayout[newRow][newCol]); 
+
+    // Star query (cells 2, 3, 4)
+    if ([2, 3, 4].includes(mazeLayout[newRow][newCol])) {
+      getQuestion(mazeLayout[newRow][newCol]);
     }
-  
+
     setRatPosition({ row: newRow, col: newCol });
   };
-  
-  
 
   const contextValue = {
     endGame,
@@ -226,9 +249,11 @@ export const GameProvider = ({ children }) => {
     currentQuestion,         
     handleAnswerSubmission,  
     numRows,
-    numCols ,
-    showBackButton ,
-    setShowBackButton
+    numCols,
+    showBackButton,
+    setShowBackButton,
+    diff,
+    setdiff,
   };
 
   return (
