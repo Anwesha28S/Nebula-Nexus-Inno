@@ -1,6 +1,7 @@
 import "../globals.css";
 import "./auth-theme.css";
 import RegistrationStars from "@/components/auth/RegistrationStars";
+import AmbientAudio from "@/components/main/AmbientAudio";
 import { Inter } from "next/font/google";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -15,6 +16,7 @@ const AuthLayout = ({ children }) => (
     <body className={inter.className}>
       <main className="auth-shell">
         <RegistrationStars />
+        <AmbientAudio />
         <div className="auth-content">{children}</div>
       </main>
     </body>

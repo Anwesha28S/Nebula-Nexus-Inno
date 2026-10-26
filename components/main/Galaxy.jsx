@@ -210,11 +210,28 @@ const start = (gl, palette, repel, warp) => {
   const program = gl.createProgram();
   const vertex = gl.createShader(gl.VERTEX_SHADER);
   const fragment = gl.createShader(gl.FRAGMENT_SHADER);
-  if (!program || !vertex || !fragment) return null;
+  if (!program || !vertex || !fragment) {
+    if (vertex) gl.deleteShader(vertex);
+    if (fragment) gl.deleteShader(fragment);
+    if (program) gl.deleteProgram(program);
+    return null;
+  }
   gl.shaderSource(vertex, VERTEX);
   gl.shaderSource(fragment, FRAGMENT.replace('#version 300 es', `#version 300 es\n${defines}`));
   gl.compileShader(vertex);
   gl.compileShader(fragment);
+
+  const vertexCompiled = gl.getShaderParameter(vertex, gl.COMPILE_STATUS);
+  const fragmentCompiled = gl.getShaderParameter(fragment, gl.COMPILE_STATUS);
+  if (!vertexCompiled || !fragmentCompiled) {
+    if (!vertexCompiled) console.error('Galaxy vertex shader failed:', gl.getShaderInfoLog(vertex));
+    if (!fragmentCompiled) console.error('Galaxy fragment shader failed:', gl.getShaderInfoLog(fragment));
+    gl.deleteShader(vertex);
+    gl.deleteShader(fragment);
+    gl.deleteProgram(program);
+    return null;
+  }
+
   gl.attachShader(program, vertex);
   gl.attachShader(program, fragment);
   gl.bindAttribLocation(program, 0, 'aPosition');
@@ -225,6 +242,7 @@ const start = (gl, palette, repel, warp) => {
 };
 
 const finish = (gl, program) => {
+  if (gl.isContextLost() || !program || !gl.isProgram(program)) return null;
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return null;
   const uniforms = {};
   const count = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
@@ -329,6 +347,10 @@ const Galaxy = ({
     const variant = (palette, repel, warp, wait) => {
       const found = entry(palette, repel, warp);
       if (!found.done && found.program) {
+        if (gl.isContextLost() || !gl.isProgram(found.program)) {
+          found.done = true;
+          return null;
+        }
         if (!wait && parallel && !gl.getProgramParameter(found.program, parallel.COMPLETION_STATUS_KHR)) return null;
         found.linked = finish(gl, found.program);
         found.done = true;
@@ -337,7 +359,9 @@ const Galaxy = ({
     };
     const initial = settingsRef.current;
     if (!variant(initial.palette.length > 0, false, false, true)) {
-      programs.forEach(found => found.program && gl.deleteProgram(found.program));
+      programs.forEach(found => {
+        if (found.program && gl.isProgram(found.program)) gl.deleteProgram(found.program);
+      });
       return undefined;
     }
 
@@ -577,7 +601,9 @@ const Galaxy = ({
       window.removeEventListener('pointercancel', onPointerUp);
       document.documentElement.removeEventListener('pointerleave', onPointerLeave);
       document.removeEventListener('visibilitychange', onVisibility);
-      programs.forEach(found => found.program && gl.deleteProgram(found.program));
+      programs.forEach(found => {
+        if (found.program && gl.isProgram(found.program)) gl.deleteProgram(found.program);
+      });
       gl.deleteBuffer(buffer);
       gl.deleteVertexArray(vao);
     };

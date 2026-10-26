@@ -1,9 +1,14 @@
 import * as z from 'zod';
 
 export const RegisterSchema = z.object({
-  email: z.string().email({
-    message: "Email is required",
-  }),
+  email: z
+    .string()
+    .trim()
+    .min(1, { message: "Email is required" })
+    .email({ message: "Enter a valid Gmail address" })
+    .refine((email) => email.toLowerCase().endsWith("@gmail.com"), {
+      message: "Enter a valid Gmail address",
+    }),
   name: z.string().min(1, {
     message: "Name is required",
   }),

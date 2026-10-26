@@ -2,7 +2,7 @@ import React from 'react';
 
 export const Instructions = () => (
   <section className="instructions-panel">
-    <div className="space-y-2">
+    <div className="instructions-content space-y-2">
       <p className="!mt-0 text-xs font-semibold uppercase tracking-[0.35em] text-[#aeb3bf]">APS presents</p>
       <h2>Game Instructions</h2>
 
