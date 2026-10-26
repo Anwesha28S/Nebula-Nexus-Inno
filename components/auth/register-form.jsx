@@ -55,14 +55,14 @@ export const RegisterForm = () => {
   return (
     <CardWrapper headerLabel="Create an account">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="register-form flex flex-col">
+        <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="register-form flex flex-col">
           <div className="register-fields flex flex-col">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel className="required-label">Name</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -80,7 +80,7 @@ export const RegisterForm = () => {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel className="required-label">Email</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -99,7 +99,7 @@ export const RegisterForm = () => {
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone</FormLabel>
+                  <FormLabel className="required-label">Phone</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
