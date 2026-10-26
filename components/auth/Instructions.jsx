@@ -13,11 +13,10 @@ export const Instructions = () => (
       <p>2. On some paths, you’ll encounter questions:</p>
 
       <ul className="list-none pl-3 space-y-1">
-        <li><strong>3 Easy Questions:</strong> Awards <strong>1 star</strong></li>
-        <li><strong>2 Medium Questions:</strong> Awards <strong>1 star</strong></li>
-        <li><strong>1 Hard Question:</strong> Awards <strong>1 star</strong></li>
-        <li><strong>Reaching Destination:</strong> Awards <strong>3 stars</strong></li>
-        <li><strong>Number of stars collected is equivalent to number of puzzle pieces collected.</strong></li>
+        <li><strong>1 Easy Question :</strong> Awards <strong>10 Points</strong></li>
+        <li><strong>1 Medium Question:</strong> Awards <strong>20 Points</strong></li>
+        <li><strong>1 Hard Question:</strong> Awards <strong>30 Points</strong></li>
+        <li><strong>Reaching Destination:</strong> Awards <strong>90 Points</strong></li>
       </ul>
 
       <p>3. The maze has multiple paths leading to the destination. Choose your path wisely to reach the destination with the highest possible star count.</p>
