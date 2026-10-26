@@ -1,6 +1,5 @@
 "use server";
 import * as z from "zod";
-import { redirect } from 'next/navigation'
 import { db } from "@/lib/db";
 import { RegisterSchema } from "@/schemas";
 import { getUserByEmail } from "@/data/user";
@@ -42,6 +41,5 @@ export const register = async (values) => {
     console.error("Sign-in error:", error);
     return { error: "Something went wrong during sign-in!" };
   }
-  redirect('../Onboarding');
-  return { success: "Registered!" };
+  return { success: true };
 };

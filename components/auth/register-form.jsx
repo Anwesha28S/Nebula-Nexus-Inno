@@ -24,6 +24,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation"; 
 
 export const RegisterForm = () => {
+  const router = useRouter();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -46,8 +47,12 @@ export const RegisterForm = () => {
     startTransition(() => {
       register( values )
         .then((data) => {
-          setError(data.error);
-          setSuccess(data.success);
+          if (data?.error) {
+            setError(data.error);
+          }
+          if (data?.success) {
+            router.push('/Onboarding');
+          }
         });
     });
   };

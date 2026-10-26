@@ -144,7 +144,7 @@ const Sidebar = () => {
       {/* 1. TOP RIGHT: SPACECRAFT VITALITY BAR (SINGLE BAR WITH 2 DIVISIONS) */}
       <div className="flex flex-col items-end">
         <div
-          className="relative px-3.5 py-2.5 rounded-md flex flex-col items-center gap-1.5 min-w-[210px]"
+          className="relative px-3.5 py-2.5 rounded-md flex flex-col items-center gap-1.5 min-w-[260px]"
           style={{
             background: "linear-gradient(180deg, #272c33 0%, #15181d 100%)",
             border: "1.5px solid #5c7080",
@@ -196,16 +196,15 @@ const Sidebar = () => {
             </div>
           </div>
 
-          {/* Below the bar: SPACECRAFT VITALITY */}
           <div className="w-full flex items-center justify-between px-0.5 pt-0.5">
             <span
-              className="text-[9.5px] font-semibold tracking-[0.18em] text-[#8ca0b3] uppercase select-none"
+              className="text-[12px] font-semibold tracking-[0.18em] text-[#8ca0b3] uppercase select-none"
               style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}
             >
               SPACECRAFT VITALITY
             </span>
             <span
-              className={`text-[9.5px] font-mono font-bold ${
+              className={`text-[14px] font-mono font-bold ${
                 lifelines === 3
                   ? "text-[#38bdf8]"
                   : lifelines === 2

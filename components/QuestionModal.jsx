@@ -135,7 +135,7 @@ const QuestionModal = () => {
               "border-[#3a4550] bg-[#161b20] hover:bg-[#232b33] hover:border-[#7c97ab] text-[#d2dde6]";
 
             if (selectedAnswer !== null) {
-              if (isAnswerCorrect) {
+              if (isSelected && isCorrect) {
                 buttonClasses =
                   "border-[#468265] bg-[#1b2b23] text-[#d8fae8] ring-1 ring-[#468265]";
               } else if (isSelected && !isCorrect) {
